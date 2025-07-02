@@ -1,0 +1,172 @@
+import turtle #turtle is a module
+import pygame #pygame is a module/python library, here we,ve used for ball paddle collision sound
+pygame.init()
+# Load sound effects
+bounce_sound = pygame.mixer.Sound("bounce.wav")
+game_over=False
+
+#display screen
+score_a=0
+score_b=0
+win=turtle.Screen() #win is a object, turtle is a module and screen is a class
+win.setup(800,600) #height and width important for coordinate system for paddle and ball arrangement
+win.title("Ping Pong Game")
+win.bgcolor("green")
+win.tracer(0)
+
+#left paddle
+left_paddle= turtle.Turtle() #left_paddle is an object, turtle is a module, Turtle is a class
+left_paddle.speed(0)
+left_paddle.shape("square")
+left_paddle.color("red")
+left_paddle.shapesize(stretch_wid=5, stretch_len=1)
+left_paddle.penup()
+left_paddle.goto(-380,0)
+
+#right paddle
+right_paddle= turtle.Turtle()
+right_paddle.speed(0)
+right_paddle.shape("square")
+right_paddle.color("red")
+right_paddle.shapesize(stretch_wid=5, stretch_len=1)
+right_paddle.penup()
+right_paddle.goto(380,0)
+
+#ball
+ball=turtle.Turtle()
+ball.speed(0)
+ball.shape("circle")
+ball.color("white")
+ball.shapesize(1.5)
+ball.penup()
+ball.goto(0,0)
+ball.dx=5.5
+ball.dy=5.5
+
+#score
+pen=turtle.Turtle()
+pen.speed(0)
+pen.penup()
+pen.hideturtle()
+pen.color("white")
+pen.goto(0,250)
+pen.write("Player A:0  Player B:0", align="center", font=("Arial", 24, "bold"))
+
+
+#functions to move the paddle up and down
+def leftpaddleup():
+    y=left_paddle.ycor() #left_paddle is a object  that we have defined before and .ycor() is a method to get y coords
+    if y<250: #so that it doesnt go beyond the screen
+        left_paddle.sety(y+20)
+
+def leftpaddledown():
+    y=left_paddle.ycor()
+    if y>-250: #so that it doesnt go down the screen
+        left_paddle.sety(y-20)
+
+def rightpaddleup():
+    y=right_paddle.ycor()
+    if y<250:
+        right_paddle.sety(y+20)
+
+def rightpaddledown():
+    y=right_paddle.ycor()
+    if y>-250:
+        right_paddle.sety(y-20) #.sety is a method to set the value of y
+
+def restart_game():
+    global score_a, score_b, game_over
+    score_a = 0
+    score_b = 0
+    game_over = False
+    ball.showturtle()
+    ball.goto(0, 0)
+    ball.dx = 5.5
+    ball.dy = 5.5
+    pen.clear()
+    pen.goto(0, 250)
+    pen.write("Player A:0  Player B:0", align="center", font=("Arial", 24, "bold"))
+    game_loop()  # Restart the game loop
+
+def quit_game():
+    turtle.bye()  # cleaner than exit()
+
+#keyboard messages
+win.listen()
+win.onkeypress(leftpaddleup, 'w') #lowercase
+win.onkeypress(leftpaddleup, 'W') #uppercase
+win.onkeypress(leftpaddledown, 's')
+win.onkeypress(leftpaddledown, 'S')
+win.onkeypress(rightpaddleup, 'Up')
+win.onkeypress(rightpaddledown, 'Down')
+win.onkeypress(lambda: exit(), 'q') #both lamba and function can be used to quit the game
+win.onkeypress(quit_game, 'Q') #quit_game and not quit_game() because quit_game() calls the function where as quit_game passes the function as reference and calls it when qis pressed
+win.onkeypress(restart_game, 'r')
+win.onkeypress(restart_game, 'R')
+
+
+
+def game_loop():
+    global score_a, score_b,game_over #it is made global because we have already given a vale to this variables and it is modified inside a function
+#or else python thinks you are creating another new variable so, global variable is given
+    if game_over:
+        return #it returns none
+    win.update() #to make the screen smoother
+
+    #for movement of ball
+    x=ball.xcor() #ball.setx(ball.xcor()+ball.dx)) is also correct
+    ball.setx(x+ball.dx)
+    y = ball.ycor()
+    ball.sety(y+ball.dy)
+
+    #wall collision with ball
+    if ball.ycor()>290:
+        ball.dy = -ball.dy #top wall
+
+    if ball.ycor()<-290:
+        ball.dy=-ball.dy #bottom wall
+
+    if ball.xcor()>390:
+        ball.dx = -ball.dx #right wall
+        score_a += 1
+        pen.clear()  # not to override
+        pen.write("Player A:{}  Player B:{}".format(score_a, score_b), align="center", font=("Arial", 24, "bold"))
+
+    if ball.xcor()<-390:
+        ball.dx=-ball.dx  #left wall
+        score_b += 1
+        pen.clear()  # not to override
+        pen.write("Player A:{}  Player B:{}".format(score_a, score_b), align="center", font=("Arial", 24, "bold"))
+
+    #paddle ball collision
+    if (ball.xcor() > 355) and (right_paddle.ycor()-50 < ball.ycor() < right_paddle.ycor()+50):
+        ball.dx *= -1
+        ball.setx(355)
+        bounce_sound.play()
+
+    if (ball.xcor() < -355) and (left_paddle.ycor()-50 < ball.ycor() < left_paddle.ycor()+50):
+        ball.dx *= -1
+        ball.setx(-355)
+        bounce_sound.play()
+
+    if score_a == 5 or score_b == 5:
+        winner = "Player A" if score_a == 5 else "Player B"
+        pen.clear()
+        pen.goto(0, 0)
+        pen.write(f"{winner}  Wins! Press R to Restart", align="center", font=("Courier", 24, "bold"))
+        ball.hideturtle()
+        ball.dx = 0
+        ball.dy = 0
+        game_over=True
+
+
+    # Call this function again after 10 ms
+    win.ontimer(game_loop, 10)
+    # Exit function
+
+
+# Start game loop
+game_loop()
+
+# Keep window listening
+win.mainloop()
